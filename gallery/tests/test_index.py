@@ -43,6 +43,7 @@ class IndexTests(unittest.TestCase):
         self.assertEqual(a1["quality"], "auto")
         self.assertEqual((a1["w"], a1["h"]), (32, 24))
         self.assertTrue(a1["context"].startswith("Make me a red square."))
+        self.assertEqual(self.images()[self.fx.a2_sha[:16]]["context"], "now make it green")
         self.assertLessEqual(len(a1["context"]), 400)
         self.assertFalse(a1["pending"])
 
@@ -109,7 +110,8 @@ class IndexTests(unittest.TestCase):
         stats = self.indexer.run()
         self.assertEqual(stats["sessions_read"], 1)
         self.assertEqual(self.images()[sha[:16]]["prompt"], "Third one.")
-        self.assertEqual(self.images()[sha[:16]]["context"][:20], "Make me a red square")
+        # the third image came after "now make it green", so that message is what asked for it
+        self.assertEqual(self.images()[sha[:16]]["context"], "now make it green")
 
     def test_event_after_image_and_removed_file(self):
         self.indexer.run()

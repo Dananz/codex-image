@@ -126,7 +126,7 @@ class Fixture:
             user(THREAD_A, self.user_a),
             filler(),
             gen(THREAD_A, self.a1, "A red square, flat.", "2026-11-01T10:01:00.000Z"),
-            user(THREAD_A, "second message is ignored for context"),
+            user(THREAD_A, "now make it green"),
             gen(THREAD_A, self.a2, "A green square from the red one.", "2026-11-01T10:02:00.000Z", inputs=[
                 {"path": str(a1_copy_for_ref), "sha256": self.a1_sha},
                 {"path": str(self.ref_live), "sha256": self.ref_live_sha},

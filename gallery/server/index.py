@@ -143,7 +143,7 @@ class Indexer:
         compressed = path.endswith(".zst")
         if compressed and zstd is None:
             return
-        state = {"thread": None, "cwd": None, "first_user": None, "creative": None}
+        state = {"thread": None, "cwd": None, "first_user": None, "creative": None, "last_user": None}
         offset = 0
         if resume_row:
             state = {k: resume_row[k] for k in state}
@@ -173,27 +173,31 @@ class Indexer:
                         obj = self._loads(line)
                         gen = obj and self._gen_from(obj, path, host)
                         if gen:
-                            gens.append(gen)
+                            # the message that asked for this image is the latest one before it
+                            gens.append(gen + (state["last_user"],))
                         continue
-                    if state["first_user"] is None and b'"UserMessage"' in line:
+                    if b'"UserMessage"' in line:
                         obj = self._loads(line)
                         item = ((obj or {}).get("payload") or {}).get("item") or {}
                         if (obj or {}).get("payload", {}).get("type") == "item_completed" \
                                 and item.get("type") == "UserMessage":
                             text = user_text(item)
-                            state["first_user"] = text
-                            creative = parse_creative(text)
-                            if creative:
-                                state["creative"] = json.dumps(creative, ensure_ascii=False)
+                            if text:
+                                state["last_user"] = text
+                            if state["first_user"] is None:
+                                state["first_user"] = text
+                                creative = parse_creative(text)
+                                if creative:
+                                    state["creative"] = json.dumps(creative, ensure_ascii=False)
             except (OSError, EOFError, ValueError):
                 pass  # unreadable tail (truncated .zst or I/O error): keep what was read
         c.execute("INSERT OR REPLACE INTO sessions(path, size, mtime, offset, thread, cwd, first_user,"
-                  " creative, host) VALUES (?,?,?,?,?,?,?,?,?)",
+                  " creative, host, last_user) VALUES (?,?,?,?,?,?,?,?,?,?)",
                   (path, st.st_size, st.st_mtime, pos, state["thread"], state["cwd"],
-                   state["first_user"], state["creative"], host))
+                   state["first_user"], state["creative"], host, state["last_user"]))
         for g in gens:
-            c.execute("INSERT OR REPLACE INTO gens(saved_path, exec_id, thread, ts, revised, session_path, inputs)"
-                      " VALUES (?,?,?,?,?,?,?)", g)
+            c.execute("INSERT OR REPLACE INTO gens(saved_path, exec_id, thread, ts, revised, session_path, inputs,"
+                      " request) VALUES (?,?,?,?,?,?,?,?)", g)
         if state["cwd"]:
             m = RUN_CWD.match(state["cwd"])
             if m:
@@ -390,7 +394,7 @@ class Indexer:
                 prompt, context, source = run["prompt"] or "", trim(run["prompt"]), "skill"
             elif gen:
                 prompt = gen["revised"] or ""
-                context = trim(session["first_user"]) if session else ""
+                context = trim(gen["request"] or (session["first_user"] if session else "") or "")
                 source = "codex"
             else:
                 prompt, context, source = "", "", "codex"

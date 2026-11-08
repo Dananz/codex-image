@@ -67,7 +67,22 @@ class Database:
         with self.write_lock:
             c = self.conn()
             c.executescript(SCHEMA)
+            self._migrate(c)
             c.commit()
+
+    @staticmethod
+    def _migrate(c: sqlite3.Connection) -> None:
+        cols = lambda t: {r[1] for r in c.execute(f"PRAGMA table_info({t})")}
+        added = False
+        if "request" not in cols("gens"):
+            c.execute("ALTER TABLE gens ADD COLUMN request TEXT")
+            added = True
+        if "last_user" not in cols("sessions"):
+            c.execute("ALTER TABLE sessions ADD COLUMN last_user TEXT")
+            added = True
+        if added:
+            # sessions read before these columns existed must be read again to fill them
+            c.execute("DELETE FROM sessions")
 
     def conn(self) -> sqlite3.Connection:
         c = getattr(self._local, "conn", None)
