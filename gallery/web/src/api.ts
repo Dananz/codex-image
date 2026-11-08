@@ -40,7 +40,7 @@ export type ServerInfo = {
   imports: { name: string; last: string | null }[]
 }
 
-export type Host = { name: string; ssh: string; last_import: string | null; new: number | null }
+export type Host = { name: string; ssh: string; last_import: string | null; new: number | null; online: boolean | null }
 
 export type Strength = 'subtle' | 'balanced' | 'strong' | 'new'
 

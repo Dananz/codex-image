@@ -5,6 +5,7 @@ from __future__ import annotations
 import gzip
 import io
 import json
+import subprocess
 import os
 import socket
 import tempfile
@@ -323,8 +324,18 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(info["idle_limit_s"], 14400)
         self.assertGreater(info["idle_left_s"], 14000)
         (self.fx.image_home / "config.json").write_text(json.dumps({"hosts": [{"name": "MoltBook", "ssh": "u@m1"}]}))
+        calls = []
+
+        def fake_ssh(argv, **kw):
+            calls.append(argv)
+            return subprocess.CompletedProcess(argv, 0, stdout="7\n", stderr="")
+        self.app.jobs.run_cmd = fake_ssh
         self.assertEqual(self.c.json("GET", "/api/hosts"),
-                         [{"name": "MoltBook", "ssh": "u@m1", "last_import": None, "new": None}])
+                         [{"name": "MoltBook", "ssh": "u@m1", "last_import": None, "new": 7, "online": True}])
+        self.assertIn("u@m1", calls[0])
+        (self.fx.image_home / "config.json").write_text(json.dumps({"hosts": [{"name": "Asleep", "ssh": "u@m4"}]}))
+        self.app.jobs.run_cmd = lambda argv, **kw: subprocess.CompletedProcess(argv, 255, stdout="", stderr="timed out")
+        self.assertEqual(self.c.json("GET", "/api/hosts")[0]["online"], False)
         before = self.app.last_request
         sse = SSE(self.app.port)
         time.sleep(0.05)

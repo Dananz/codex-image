@@ -391,7 +391,7 @@ class Handler(BaseHTTPRequestHandler):
             threading.Timer(0.2, app.stop).start()
             return None
         if parts == ["hosts"] and method == "GET":
-            return self._json(app.jobs.hosts())
+            return self._json(app.jobs.hosts(probe=True))
         if parts == ["import"] and method == "POST":
             body = self._json_body()
             return self._json({"job": app.jobs.start_import(str(body.get("host") or ""))})

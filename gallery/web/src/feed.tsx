@@ -230,6 +230,7 @@ type Hosts = { state: 'loading' } | { state: 'error'; message: string } | { stat
 const sshShort = (ssh: string) => ssh.split('@').pop() ?? ssh
 
 function hostNote(h: Host) {
+  if (h.online === false) return 'offline'
   if (h.new) return `${h.new.toLocaleString()} new`
   if (h.new === 0) return 'up to date'
   return h.last_import ? '' : 'never'
@@ -285,11 +286,12 @@ export function ImportBtn({ g, container }: { g: Gallery; container: RefObject<H
         <p className="px-2.5 py-2 text-[12px] leading-[1.5] text-white/50">No other Macs yet. Add them to <span className="font-[Geist_Mono] text-white/70">~/.codex-image/config.json</span>.</p>
       )}
       {others.map(h => (
-        <button key={h.name} onClick={() => { setOpen(false); void g.importFrom(h.name, h.new) }}
+        <button key={h.name} disabled={h.online === false} title={h.online === false ? `${h.name} is not reachable over SSH right now` : undefined}
+          onClick={() => { setOpen(false); void g.importFrom(h.name, h.new) }}
           className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left hover:bg-white/[0.06] disabled:opacity-40 disabled:hover:bg-transparent">
           <Laptop size={16} className="text-white/60" />
           <span className="min-w-0 flex-1 truncate">{h.name}<span className="ml-1.5 text-white/40">{sshShort(h.ssh)}</span></span>
-          <span className="text-[12px] text-sky-300">{hostNote(h)}</span>
+          <span className={`text-[12px] ${h.online === false ? 'text-white/45' : 'text-sky-300'}`}>{hostNote(h)}</span>
         </button>
       ))}
       {hosts.state === 'ready' && hosts.self && (

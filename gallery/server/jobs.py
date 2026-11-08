@@ -48,6 +48,7 @@ class Jobs:
         self.jobs: dict[str, dict] = {}
         self.lock = threading.Lock()
         self.import_lock = threading.Lock()
+        self._probe_cache: dict[str, tuple[float, int | None]] = {}
         self.run_cmd = subprocess.run
         self.esrgan_exe: Path | None = None
         self.threads = [threading.Thread(target=self._worker, daemon=True, name=f"regen-{i}")
@@ -261,15 +262,42 @@ class Jobs:
 
     # ---------- import ----------
 
-    def hosts(self) -> list[dict]:
+    def hosts(self, probe: bool = False) -> list[dict]:
         cfg = self.app.config()
         out = []
         for h in cfg.get("hosts") or []:
             if not isinstance(h, dict) or not h.get("name"):
                 continue
             out.append({"name": h["name"], "ssh": h.get("ssh") or h["name"],
-                        "last_import": self.app.db.get_kv("import:" + h["name"]), "new": None})
+                        "last_import": self.app.db.get_kv("import:" + h["name"]), "new": None, "online": None})
+        if probe and out:
+            threads = [threading.Thread(target=self._probe, args=(h,), daemon=True) for h in out]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join(8)
         return out
+
+    def _probe(self, host: dict) -> None:
+        """Ask the other Mac how many images it has; a short timeout so a sleeping Mac shows as offline."""
+        key = host["name"]
+        cached = self._probe_cache.get(key)
+        if cached and time.monotonic() - cached[0] < 60:
+            remote = cached[1]
+        else:
+            try:
+                proc = self.run_cmd(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=4", host["ssh"],
+                                     "find ~/.codex/generated_images -type f -name '*.png' 2>/dev/null | wc -l"],
+                                    capture_output=True, text=True, timeout=7)
+                remote = int(proc.stdout.strip()) if proc.returncode == 0 and proc.stdout.strip().isdigit() else None
+            except (subprocess.TimeoutExpired, OSError, ValueError):
+                remote = None
+            self._probe_cache[key] = (time.monotonic(), remote)
+        host["online"] = remote is not None
+        if remote is not None:
+            local_dir = self.app.home.imported / key / "generated_images"
+            local = sum(1 for p in local_dir.glob("*/*.png")) if local_dir.is_dir() else 0
+            host["new"] = max(0, remote - local)
 
     def start_import(self, name: str) -> str:
         host = next((h for h in self.hosts() if h["name"] == name), None)

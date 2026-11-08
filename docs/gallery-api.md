@@ -88,7 +88,7 @@ when the client accepts it.
 | `GET /api/events` | Server-Sent Events, below |
 | `GET /api/server` | the server popover, below |
 | `POST /api/server/stop` | stops the server and its tailscale serve → `{ "ok": true }` |
-| `GET /api/hosts` | `[{ "name": "MoltBook", "ssh": "tomerdanan@m1", "last_import": iso or null, "new": n or null }]` |
+| `GET /api/hosts` | `[{ "name": "MoltBook", "ssh": "tomerdanan@m1", "last_import": iso or null, "new": n or null, "online": bool }]`; each Mac is asked over SSH (4 s timeout, cached 60 s) how many images it has |
 | `POST /api/import` | body `{ "host": "MoltBook" }` → `{ "job": id }` |
 
 Regenerate body:
