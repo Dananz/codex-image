@@ -75,7 +75,7 @@ export function Regenerate({ g, container, wide }: { g: Gallery; container: RefO
           <Label>Prompt</Label>
           <textarea value={text} onChange={e => setText(e.target.value)} rows={wide ? 6 : 4} data-base-ui-swipe-ignore
             onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void run() } }}
-            className="w-full resize-none rounded-2xl bg-white/[0.05] p-3.5 text-[15px] leading-[1.55] text-white outline-none focus:bg-white/[0.08]" />
+            className="w-full resize-none rounded-2xl bg-white/[0.05] p-3.5 text-[16px] leading-[1.5] text-white outline-none focus:bg-white/[0.08]" />
         </label>
         <div>
           <div className="mb-2 flex items-baseline justify-between"><Label>How far from the original</Label><span className="text-[13px] font-medium">{strength}</span></div>

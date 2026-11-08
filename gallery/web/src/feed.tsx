@@ -180,7 +180,7 @@ export function SearchField({ g, className = '', autoFocus, onBlur }: { g: Galle
       <MagnifyingGlass size={15} className="shrink-0" />
       <input value={g.query} onChange={e => g.setQuery(e.target.value)} placeholder="Search prompts" data-shoot="search" autoFocus={autoFocus} onBlur={onBlur}
         onKeyDown={e => { if (e.key === 'Escape') { e.preventDefault(); (e.target as HTMLInputElement).blur() } }}
-        className="min-w-0 flex-1 bg-transparent text-white outline-none placeholder:text-white/40" />
+        className="min-w-0 flex-1 bg-transparent text-[16px] text-white outline-none placeholder:text-white/40" />
       {g.query && <button onMouseDown={e => e.preventDefault()} onClick={() => g.setQuery('')} aria-label="Clear search" className="text-white/50 hover:text-white"><X size={14} /></button>}
     </label>
   )

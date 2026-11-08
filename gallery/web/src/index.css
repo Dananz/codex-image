@@ -7,5 +7,7 @@
 @layer base {
   html, body, #root { height: 100%; }
   body { margin: 0; background: #0b0b0d; color: #fff; color-scheme: dark; overscroll-behavior: none; }
+  /* iOS zooms into any field under 16px; no field may go below it */
+  input:not([type=file]):not([type=checkbox]):not([type=radio]):not([type=range]), textarea, select { font-size: max(16px, 1em) !important; }
   :focus-visible { outline: 1.5px solid oklch(74.6% 0.16 232.661 / 0.8); outline-offset: -1.5px; }
 }
