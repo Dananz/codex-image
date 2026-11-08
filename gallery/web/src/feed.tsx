@@ -7,7 +7,7 @@ import { api, type Host, type Img } from './api'
 import { Tile, useWidth, timeLabel, shortMonth } from './parts'
 import type { Filter, Gallery } from './state'
 
-export type Jump = { toId: (id: string) => void; toFraction: (f: number) => void }
+export type Jump = { toId: (id: string) => void; toFraction: (f: number) => void; el: () => HTMLElement | null }
 export type FeedState = { date?: Date; offset: number; fraction: number; dir: 1 | -1 }
 
 export const glass = 'border border-white/[0.08] bg-[#16161a]/75 shadow-[0_8px_32px_rgba(0,0,0,.45)] backdrop-blur-2xl backdrop-saturate-150'
@@ -47,18 +47,19 @@ export function MasonryFeed({ g, top = 20, bottom = 20, right = 20, left = 20, j
     const total = v.getTotalSize() - (scroller.current?.clientHeight ?? 0)
     const dir = offset >= last.current ? 1 : -1
     last.current = offset
-    onState?.({ date: g.list[firstIdx]?.date, offset, fraction: total > 0 ? Math.min(1, offset / total) : 0, dir })
+    onState?.({ date: g.list[firstIdx]?.date, offset, fraction: total > 0 ? Math.min(1, Math.max(0, offset / total)) : 0, dir })
   }, [offset, firstIdx, g.list]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (jump) jump.current = {
     toId: id => { const i = g.list.findIndex(x => x.id === id); if (i >= 0) v.scrollToIndex(i, { align: 'center' }) },
     toFraction: f => v.scrollToIndex(Math.round(f * (g.list.length - 1)), { align: 'start' }),
+    el: () => scroller.current,
   }
   useEffect(() => { if (g.highlight && !g.openId) jump?.current?.toId(g.highlight) }, [g.highlight]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div ref={measure} className="absolute inset-0">
-      <div ref={scroller} className="h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-shoot="scroller">
+      <div ref={scroller} className="h-full overflow-y-auto overscroll-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-shoot="scroller">
         <div className="relative" style={{ height: v.getTotalSize() }}>
           {items.map(it => {
             const img = g.list[it.index]
@@ -101,6 +102,33 @@ export function Timeline({ g, state, jump, orientation = 'vertical', className =
     let prev = -1
     return monthsOf(g.list).map(m => { const pos = prev < 0 ? m.f : Math.max(m.f, prev + minGap); prev = pos; return { ...m, f: pos } })
   }, [g.list, vert])
+  // The thumb follows the scroll on every frame, outside React, so it moves as smoothly as the page.
+  // It is clamped to the track: iOS rubber-banding reports offsets past both ends.
+  const thumbRef = useRef<HTMLSpanElement>(null)
+  const dragPos = useRef<number | null>(null)
+  dragPos.current = drag ? drag.pos : null
+  useEffect(() => {
+    const el = jump.current?.el()
+    const track = ref.current
+    const t = thumbRef.current
+    if (!el || !track || !t) return
+    let frame = 0
+    const place = () => {
+      frame = 0
+      const max = el.scrollHeight - el.clientHeight
+      const f = dragPos.current ?? (max > 0 ? Math.min(1, Math.max(0, el.scrollTop / max)) : 0)
+      const room = vert ? track.clientHeight - t.offsetHeight : track.clientWidth - t.offsetWidth
+      const px = Math.round(f * Math.max(0, room))
+      t.style.transform = vert ? `translate3d(0, ${px}px, 0)` : `translate3d(${px}px, 0, 0)`
+    }
+    const queue = () => { if (!frame) frame = requestAnimationFrame(place) }
+    place()
+    el.addEventListener('scroll', queue, { passive: true })
+    const ro = new ResizeObserver(queue)
+    ro.observe(el); ro.observe(track)
+    return () => { el.removeEventListener('scroll', queue); ro.disconnect(); cancelAnimationFrame(frame) }
+  }, [jump, vert, g.list.length])
+  useEffect(() => { if (!thumbRef.current) return; const el = jump.current?.el(); el?.dispatchEvent(new Event('scroll')) }, [drag, jump])
   if (g.list.length < 2) return null
   const at = (e: { clientX: number; clientY: number }) => {
     const b = ref.current!.getBoundingClientRect()
@@ -110,7 +138,6 @@ export function Timeline({ g, state, jump, orientation = 'vertical', className =
     if (d) setDrag({ pos: f, label: `${shortMonth(d)} ${d.getDate()}` })
   }
   const cur = state.date ? `${state.date.getFullYear()}-${state.date.getMonth()}` : ''
-  const thumb = drag ? drag.pos : state.fraction
   return (
     <div
       ref={ref} data-shoot="timeline"
@@ -122,8 +149,7 @@ export function Timeline({ g, state, jump, orientation = 'vertical', className =
     >
       <span className={`absolute ${vert ? 'inset-y-0 right-[1px] w-1.5' : 'inset-x-0 bottom-[1px] h-1.5'}`}>
         <span className={`absolute rounded-full bg-white/10 ${vert ? 'inset-y-0 left-[2px] w-[2px]' : 'inset-x-0 top-[2px] h-[2px]'}`} />
-        <span className={`absolute rounded-full bg-white transition-[top,left] duration-75 ${vert ? 'left-0 h-6 w-1.5 -translate-y-1/2' : 'top-0 h-1.5 w-6 -translate-x-1/2'}`}
-          style={vert ? { top: `${thumb * 100}%` } : { left: `${thumb * 100}%` }} />
+        <span ref={thumbRef} className={`absolute rounded-full bg-white will-change-transform ${vert ? 'left-0 top-0 h-6 w-1.5' : 'left-0 top-0 h-1.5 w-6'}`} />
       </span>
       {months.map(m => (
         <span key={m.key}
