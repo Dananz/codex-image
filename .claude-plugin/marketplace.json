@@ -1,0 +1,14 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
+  "name": "codex-image",
+  "description": "Codex image generation and a gallery of everything it made.",
+  "owner": { "name": "Tomer Danan" },
+  "plugins": [
+    {
+      "name": "codex-image",
+      "description": "Generate images through Codex, and browse, search and regenerate them in a gallery.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}

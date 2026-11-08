@@ -1,0 +1,11 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@source "../index.html";
+
+@keyframes hl { 0% { opacity: 0 } 12% { opacity: 1 } 70% { opacity: 1 } 100% { opacity: 0 } }
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body { margin: 0; background: #0b0b0d; color: #fff; color-scheme: dark; overscroll-behavior: none; }
+  :focus-visible { outline: 1.5px solid oklch(74.6% 0.16 232.661 / 0.8); outline-offset: -1.5px; }
+}

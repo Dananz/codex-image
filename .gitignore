@@ -2,3 +2,6 @@ __pycache__/
 *.py[cod]
 .DS_Store
 .pytest_cache/
+.worktrees/
+.prototypes/
+gallery/web/node_modules/

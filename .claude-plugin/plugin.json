@@ -1,0 +1,6 @@
+{
+  "name": "codex-image",
+  "version": "0.2.0",
+  "description": "Generate and edit images through the Codex CLI with your ChatGPT login, and browse every image Codex made in a private gallery on your tailnet.",
+  "author": { "name": "Tomer Danan", "url": "https://github.com/Dananz" }
+}
