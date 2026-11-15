@@ -1,9 +1,9 @@
 ---
-name: generate
+name: create
 description: >-
   Generate or edit images through Codex CLI using ChatGPT login, including
   reference images, batches, verified PNG output, timeouts, and recovery.
-  Use for /codex-image:generate, /codex-image or when the user specifically wants the Codex OAuth
+  Use for /codex-image:create, /codex-image or when the user specifically wants the Codex OAuth
   image workflow. Targets ChatGPT Images 2.5 where available; does not claim
   to select or verify a backend the CLI does not expose.
 ---
@@ -17,7 +17,7 @@ and publishes files without overwriting existing output.
 ## Run
 
 Resolve the plugin root from this skill's path: it is two folders up from this
-`SKILL.md` (`<root>/skills/generate/SKILL.md`). Do not assume it is the current
+`SKILL.md` (`<root>/skills/create/SKILL.md`). Do not assume it is the current
 directory. Requirements: macOS/Linux, Python 3.10+, Pillow, and
 Codex CLI signed in with ChatGPT (`codex login`). For setup, additional options,
 and recovery, read [references/usage.md](../../references/usage.md).
