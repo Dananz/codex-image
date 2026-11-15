@@ -16,7 +16,7 @@
 
 Two skills in one plugin:
 
-- **`generate`** runs the Codex CLI's built-in image tool through a small Python runner. It stages
+- **`create`** runs the Codex CLI's built-in image tool through a small Python runner. It stages
   reference images, runs Codex once, checks every PNG with Pillow and publishes the files without
   overwriting anything. No API key and no tokens to handle: it uses the ChatGPT login Codex already has.
 - **`gallery`** is a private web app for every image Codex has made on your Mac, whether it came
@@ -57,7 +57,7 @@ Then run the scripts with that Python. Nothing here installs dependencies or cha
 /plugin install codex-image@codex-image
 ```
 
-Then use `/codex-image:generate` and `/codex-image:gallery`, or just ask ("make an app icon",
+Then use `/codex-image:create` and `/codex-image:gallery`, or just ask ("make an app icon",
 "open the gallery").
 
 </details>
@@ -77,7 +77,7 @@ does not work. The gallery runs from the same checkout (see [Gallery](#gallery))
 </details>
 
 Use one install per Mac. With both, the same runner shows up twice, as `/codex-image` and
-`/codex-image:generate`.
+`/codex-image:create`.
 
 ## Generate
 
@@ -209,7 +209,7 @@ The full API and data layout are in [docs/gallery-api.md](docs/gallery-api.md).
 
 ```text
 SKILL.md                  generate skill (clone install)
-skills/generate/SKILL.md  generate skill (plugin)
+skills/create/SKILL.md  generate skill (plugin)
 skills/gallery/SKILL.md   gallery skill (plugin)
 scripts/generate.py       the runner
 gallery/server/           index, API, jobs, CLI
